@@ -1,0 +1,310 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Mood Journal</title>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600;700&family=DM+Serif+Display:ital@0;1&display=swap" rel="stylesheet">
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    :root {
+      --bg: #f4f5f9; --white: #ffffff;
+      --purple: #5b4fcf; --purple-light: #ede9ff; --purple-mid: #7c72e0;
+      --yellow: #f5c842; --yellow-light: #fffbe6;
+      --green: #4caf8a; --green-light: #e6f7f1;
+      --text: #1a1a2e; --text-muted: #8b8fa8; --border: #e8e9f0;
+      --shadow: 0 4px 24px rgba(91,79,207,0.08);
+    }
+    body { font-family: 'DM Sans', sans-serif; background: var(--bg); color: var(--text); min-height: 100vh; }
+    .topbar { background: var(--white); padding: 1.2rem 1.5rem; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--border); position: sticky; top: 0; z-index: 100; }
+    .topbar-left h2 { font-family: 'DM Serif Display', serif; font-size: 1.3rem; }
+    .topbar-left p { font-size: 0.78rem; color: var(--text-muted); margin-top: 1px; }
+    .avatar { width: 38px; height: 38px; background: linear-gradient(135deg, var(--purple), var(--purple-mid)); border-radius: 50%; display: flex; align-items: center; justify-content: center; color: white; font-weight: 700; font-size: 0.9rem; }
+    .main { max-width: 480px; margin: 0 auto; padding: 1.5rem 1rem 4rem; }
+    .stats-row { display: grid; grid-template-columns: 1fr 1fr; gap: 0.8rem; margin-bottom: 1.5rem; }
+    .stat-card { background: var(--white); border-radius: 20px; padding: 1.2rem; box-shadow: var(--shadow); }
+    .stat-card.purple { background: linear-gradient(135deg, var(--purple), var(--purple-mid)); }
+    .stat-card.yellow { background: var(--yellow-light); }
+    .stat-icon { width: 36px; height: 36px; border-radius: 10px; display: flex; align-items: center; justify-content: center; font-size: 1.1rem; margin-bottom: 0.8rem; }
+    .stat-card.purple .stat-icon { background: rgba(255,255,255,0.2); }
+    .stat-card.yellow .stat-icon { background: var(--yellow); }
+    .stat-value { font-size: 1.6rem; font-weight: 700; line-height: 1; }
+    .stat-card.purple .stat-value { color: white; }
+    .stat-label { font-size: 0.75rem; margin-top: 4px; color: var(--text-muted); }
+    .stat-card.purple .stat-label { color: rgba(255,255,255,0.75); }
+    .section-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem; }
+    .section-title { font-family: 'DM Serif Display', serif; font-size: 1.15rem; }
+    .see-all { font-size: 0.78rem; color: var(--purple); font-weight: 600; cursor: pointer; }
+    .form-card { background: var(--white); border-radius: 24px; padding: 1.5rem; box-shadow: var(--shadow); margin-bottom: 1.5rem; }
+    .question-label { font-size: 0.78rem; font-weight: 600; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.06em; margin-bottom: 0.8rem; }
+    .mood-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 0.5rem; margin-bottom: 1.4rem; }
+    .mood-btn { background: var(--bg); border: 2px solid transparent; border-radius: 14px; padding: 0.65rem 0.3rem; cursor: pointer; text-align: center; transition: all 0.18s; color: var(--text); font-size: 0.72rem; font-weight: 500; font-family: 'DM Sans', sans-serif; }
+    .mood-btn .emoji { font-size: 1.4rem; display: block; margin-bottom: 0.25rem; }
+    .mood-btn:hover { border-color: var(--purple-light); background: var(--purple-light); }
+    .mood-btn.selected { border-color: var(--purple); background: var(--purple-light); color: var(--purple); font-weight: 700; }
+    .input-field { width: 100%; background: var(--bg); border: 1.5px solid var(--border); border-radius: 12px; padding: 0.8rem 1rem; color: var(--text); font-size: 0.9rem; outline: none; transition: border-color 0.2s; font-family: 'DM Sans', sans-serif; margin-bottom: 1.2rem; }
+    .input-field:focus { border-color: var(--purple); background: white; }
+    textarea.input-field { resize: vertical; min-height: 75px; }
+    .toggle-row { display: flex; align-items: center; gap: 0.9rem; margin-bottom: 0.8rem; }
+    .toggle { position: relative; width: 46px; height: 24px; }
+    .toggle input { opacity: 0; width: 0; height: 0; }
+    .slider { position: absolute; inset: 0; background: var(--border); border-radius: 24px; cursor: pointer; transition: 0.25s; }
+    .slider::before { content: ""; position: absolute; width: 16px; height: 16px; left: 4px; bottom: 4px; background: white; border-radius: 50%; transition: 0.25s; box-shadow: 0 1px 4px rgba(0,0,0,0.15); }
+    input:checked + .slider { background: var(--purple); }
+    input:checked + .slider::before { transform: translateX(22px); }
+    .toggle-label { font-size: 0.88rem; color: var(--text); font-weight: 500; }
+    .occasion-extra { display: none; margin-bottom: 1.2rem; }
+    .occasion-extra.visible { display: block; }
+    .score-row { display: flex; gap: 0.45rem; margin-bottom: 1.4rem; }
+    .score-btn { flex: 1; padding: 0.55rem 0.2rem; background: var(--bg); border: 2px solid transparent; border-radius: 12px; color: var(--text); cursor: pointer; font-size: 0.85rem; font-family: 'DM Sans', sans-serif; font-weight: 600; transition: all 0.18s; text-align: center; line-height: 1.4; }
+    .score-btn:hover { background: var(--purple-light); border-color: var(--purple-light); }
+    .score-btn.selected { border-color: var(--purple); background: var(--purple-light); color: var(--purple); }
+    .submit-btn { width: 100%; padding: 0.95rem; background: var(--purple); color: white; border: none; border-radius: 14px; font-size: 0.95rem; font-weight: 700; font-family: 'DM Sans', sans-serif; cursor: pointer; transition: background 0.2s, transform 0.1s; }
+    .submit-btn:hover { background: var(--purple-mid); }
+    .submit-btn:active { transform: scale(0.98); }
+    .filter-row { display: flex; gap: 0.5rem; margin-bottom: 1rem; flex-wrap: wrap; }
+    .filter-btn { padding: 0.4rem 1rem; border-radius: 20px; border: 1.5px solid var(--border); background: var(--white); color: var(--text-muted); font-size: 0.78rem; font-weight: 600; cursor: pointer; font-family: 'DM Sans', sans-serif; transition: all 0.15s; }
+    .filter-btn:hover { border-color: var(--purple); color: var(--purple); }
+    .filter-btn.active { background: var(--purple); border-color: var(--purple); color: white; }
+    .entry-card { background: var(--white); border-radius: 20px; padding: 1.1rem 1.2rem; margin-bottom: 0.8rem; box-shadow: var(--shadow); display: flex; justify-content: space-between; align-items: flex-start; transition: transform 0.15s; }
+    .entry-card:hover { transform: translateY(-2px); }
+    .entry-left { display: flex; gap: 0.9rem; align-items: flex-start; }
+    .entry-emoji-wrap { width: 42px; height: 42px; background: var(--purple-light); border-radius: 12px; display: flex; align-items: center; justify-content: center; font-size: 1.3rem; flex-shrink: 0; }
+    .entry-mood { font-size: 0.95rem; font-weight: 700; }
+    .entry-note { font-size: 0.8rem; color: var(--text-muted); margin-top: 2px; line-height: 1.4; }
+    .entry-meta { display: flex; gap: 0.5rem; align-items: center; margin-top: 5px; flex-wrap: wrap; }
+    .badge { font-size: 0.7rem; padding: 2px 8px; border-radius: 20px; font-weight: 600; }
+    .badge-purple { background: var(--purple-light); color: var(--purple); }
+    .badge-green { background: var(--green-light); color: var(--green); }
+    .entry-date { font-size: 0.7rem; color: var(--text-muted); }
+    .delete-btn { background: none; border: none; color: #e07b6a; cursor: pointer; font-size: 0.85rem; padding: 0.3rem 0.5rem; border-radius: 8px; transition: background 0.15s; }
+    .delete-btn:hover { background: #fff0ed; }
+    .empty { text-align: center; color: var(--text-muted); padding: 2rem; font-size: 0.9rem; }
+    .empty-icon { font-size: 2rem; margin-bottom: 0.5rem; }
+    .divider { height: 1px; background: var(--border); margin: 1.2rem 0; }
+    .toast { position: fixed; bottom: 2rem; left: 50%; transform: translateX(-50%) translateY(10px); background: var(--text); color: white; padding: 0.7rem 1.5rem; border-radius: 12px; font-size: 0.88rem; font-weight: 600; opacity: 0; transition: opacity 0.3s, transform 0.3s; pointer-events: none; white-space: nowrap; }
+    .toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+  </style>
+</head>
+<body>
+
+  <div class="topbar">
+    <div class="topbar-left">
+      <h2>Mood Journal</h2>
+      <p id="todayDate">Today</p>
+    </div>
+    <div class="avatar">H</div>
+  </div>
+
+  <div class="main">
+
+    <div class="stats-row">
+      <div class="stat-card purple">
+        <div class="stat-icon">📓</div>
+        <div class="stat-value" id="totalCount">0</div>
+        <div class="stat-label">Total Entries</div>
+      </div>
+      <div class="stat-card yellow">
+        <div class="stat-icon">🌟</div>
+        <div class="stat-value" id="avgScore">—</div>
+        <div class="stat-label">Avg. Mood Score</div>
+      </div>
+    </div>
+
+    <div class="section-header">
+      <div class="section-title">How are you feeling?</div>
+    </div>
+
+    <div class="form-card">
+      <div class="question-label">Select your mood</div>
+      <div class="mood-grid">
+        <button class="mood-btn" data-mood="happy" onclick="selectMood(this)"><span class="emoji">😊</span>Happy</button>
+        <button class="mood-btn" data-mood="sad" onclick="selectMood(this)"><span class="emoji">😢</span>Sad</button>
+        <button class="mood-btn" data-mood="anxious" onclick="selectMood(this)"><span class="emoji">😰</span>Anxious</button>
+        <button class="mood-btn" data-mood="calm" onclick="selectMood(this)"><span class="emoji">😌</span>Calm</button>
+        <button class="mood-btn" data-mood="excited" onclick="selectMood(this)"><span class="emoji">🤩</span>Excited</button>
+        <button class="mood-btn" data-mood="tired" onclick="selectMood(this)"><span class="emoji">😴</span>Tired</button>
+        <button class="mood-btn" data-mood="angry" onclick="selectMood(this)"><span class="emoji">😠</span>Angry</button>
+      </div>
+
+      <div class="question-label">Add a note</div>
+      <textarea class="input-field" id="noteInput" placeholder="Write how you feel..."></textarea>
+
+      <div class="question-label">Is it a special occasion?</div>
+      <div class="toggle-row" style="margin-bottom:0.6rem">
+        <label class="toggle">
+          <input type="checkbox" id="occasionToggle" onchange="toggleOccasion()" />
+          <span class="slider"></span>
+        </label>
+        <span class="toggle-label" id="toggleLabel">No</span>
+      </div>
+      <div class="occasion-extra" id="occasionExtra">
+        <input type="text" class="input-field" id="occasionName" placeholder="e.g. Birthday, Graduation, Eid..." style="margin-bottom:0" />
+      </div>
+
+      <div class="divider"></div>
+
+      <div class="question-label">Rate your day</div>
+      <div class="score-row">
+        <button class="score-btn" onclick="selectScore(this,1)">1<br>😞</button>
+        <button class="score-btn" onclick="selectScore(this,2)">2<br>😕</button>
+        <button class="score-btn" onclick="selectScore(this,3)">3<br>😐</button>
+        <button class="score-btn" onclick="selectScore(this,4)">4<br>🙂</button>
+        <button class="score-btn" onclick="selectScore(this,5)">5<br>😄</button>
+      </div>
+
+      <button class="submit-btn" onclick="submitMood()">Save Entry</button>
+    </div>
+
+    <div class="section-header">
+      <div class="section-title">My Entries</div>
+    </div>
+
+    <div class="filter-row" id="filterRow">
+      <button class="filter-btn active" onclick="setFilter('all', this)">All</button>
+      <button class="filter-btn" onclick="setFilter('happy', this)">😊 Happy</button>
+      <button class="filter-btn" onclick="setFilter('sad', this)">😢 Sad</button>
+      <button class="filter-btn" onclick="setFilter('anxious', this)">😰 Anxious</button>
+      <button class="filter-btn" onclick="setFilter('calm', this)">😌 Calm</button>
+      <button class="filter-btn" onclick="setFilter('excited', this)">🤩 Excited</button>
+      <button class="filter-btn" onclick="setFilter('tired', this)">😴 Tired</button>
+      <button class="filter-btn" onclick="setFilter('angry', this)">😠 Angry</button>
+    </div>
+
+    <div id="entriesList">
+      <div class="empty"><div class="empty-icon">🌱</div>No entries yet. Add your first mood!</div>
+    </div>
+  </div>
+
+  <div class="toast" id="toast"></div>
+
+  <script>
+    const STORAGE_KEY = 'moodjournal_entries';
+    let selectedMood = '';
+    let selectedScore = 0;
+    let activeFilter = 'all';
+
+    document.getElementById('todayDate').textContent =
+      'Today, ' + new Date().toLocaleDateString('en-US', { month: 'long', day: 'numeric' });
+
+    function getEntries() {
+      return JSON.parse(localStorage.getItem(STORAGE_KEY) || '[]');
+    }
+
+    function saveEntries(entries) {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(entries));
+    }
+
+    function selectMood(btn) {
+      document.querySelectorAll('.mood-btn').forEach(b => b.classList.remove('selected'));
+      btn.classList.add('selected');
+      selectedMood = btn.dataset.mood;
+    }
+
+    function selectScore(btn, score) {
+      document.querySelectorAll('.score-btn').forEach(b => b.classList.remove('selected'));
+      btn.classList.add('selected');
+      selectedScore = score;
+    }
+
+    function toggleOccasion() {
+      const checked = document.getElementById('occasionToggle').checked;
+      document.getElementById('toggleLabel').textContent = checked ? 'Yes' : 'No';
+      document.getElementById('occasionExtra').classList.toggle('visible', checked);
+    }
+
+    function setFilter(mood, btn) {
+      activeFilter = mood;
+      document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      loadEntries();
+    }
+
+    function submitMood() {
+      if (!selectedMood) { alert('Please select a mood! 😊'); return; }
+      const isOccasion = document.getElementById('occasionToggle').checked;
+      const entries = getEntries();
+      entries.push({
+        id: Date.now(),
+        mood: selectedMood,
+        note: document.getElementById('noteInput').value,
+        isSpecialOccasion: isOccasion,
+        occasionName: isOccasion ? document.getElementById('occasionName').value : '',
+        moodScore: selectedScore,
+        date: new Date().toISOString()
+      });
+      saveEntries(entries);
+      showToast('✓ Entry saved!');
+      resetForm();
+      loadEntries();
+    }
+
+    function loadEntries() {
+      let data = getEntries();
+
+      // Stats (always from all entries)
+      document.getElementById('totalCount').textContent = data.length;
+      const scores = data.filter(e => e.moodScore > 0).map(e => e.moodScore);
+      document.getElementById('avgScore').textContent =
+        scores.length ? (scores.reduce((a,b) => a+b,0) / scores.length).toFixed(1) : '—';
+
+      // Filter
+      if (activeFilter !== 'all') data = data.filter(e => e.mood === activeFilter);
+
+      const list = document.getElementById('entriesList');
+      if (data.length === 0) {
+        list.innerHTML = '<div class="empty"><div class="empty-icon">🌱</div>No entries found.</div>';
+        return;
+      }
+
+      list.innerHTML = [...data].reverse().map(e => `
+        <div class="entry-card">
+          <div class="entry-left">
+            <div class="entry-emoji-wrap">${getMoodEmoji(e.mood)}</div>
+            <div>
+              <div class="entry-mood">${capitalize(e.mood)}</div>
+              ${e.note ? `<div class="entry-note">${e.note}</div>` : ''}
+              <div class="entry-meta">
+                ${e.moodScore ? `<span class="badge badge-purple">⭐ ${e.moodScore}/5</span>` : ''}
+                ${e.isSpecialOccasion ? `<span class="badge badge-green">🎉 ${e.occasionName || 'Special'}</span>` : ''}
+                <span class="entry-date">${new Date(e.date).toLocaleString('en-US',{month:'short',day:'numeric',hour:'2-digit',minute:'2-digit'})}</span>
+              </div>
+            </div>
+          </div>
+          <button class="delete-btn" onclick="deleteEntry(${e.id})">✕</button>
+        </div>
+      `).join('');
+    }
+
+    function deleteEntry(id) {
+      saveEntries(getEntries().filter(e => e.id !== id));
+      loadEntries();
+    }
+
+    function getMoodEmoji(mood) {
+      return {happy:'😊',sad:'😢',anxious:'😰',calm:'😌',excited:'🤩',tired:'😴',angry:'😠'}[mood] || '😐';
+    }
+
+    function capitalize(s) { return s.charAt(0).toUpperCase() + s.slice(1); }
+
+    function resetForm() {
+      document.querySelectorAll('.mood-btn, .score-btn').forEach(b => b.classList.remove('selected'));
+      document.getElementById('noteInput').value = '';
+      document.getElementById('occasionToggle').checked = false;
+      document.getElementById('occasionExtra').classList.remove('visible');
+      document.getElementById('toggleLabel').textContent = 'No';
+      document.getElementById('occasionName').value = '';
+      selectedMood = ''; selectedScore = 0;
+    }
+
+    function showToast(msg) {
+      const t = document.getElementById('toast');
+      t.textContent = msg;
+      t.classList.add('show');
+      setTimeout(() => t.classList.remove('show'), 2500);
+    }
+
+    loadEntries();
+  </script>
+</body>
+</html>

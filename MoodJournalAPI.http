@@ -1,0 +1,6 @@
+@MoodJournalAPI_HostAddress = http://localhost:5200
+
+GET {{MoodJournalAPI_HostAddress}}/weatherforecast/
+Accept: application/json
+
+###
